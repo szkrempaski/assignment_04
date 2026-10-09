@@ -25,7 +25,7 @@ def merge_employees(timesheet: pd.DataFrame, employees: pd.DataFrame) -> pd.Data
 
     Two rules, and both come from the same real-world situation:
 
-    1. **Every timesheet row survives.** An `employee_id` that is not on the
+        1. **Every timesheet row survives.** An `employee_id` that is not on the
        roster (a new hire HR has not entered yet, a typo by a shift lead) still
        worked those hours. Its roster columns come back as `NaN`, and Step 3 will
        label it — but if it vanishes here, the person does not get paid and
@@ -45,5 +45,4 @@ def merge_employees(timesheet: pd.DataFrame, employees: pd.DataFrame) -> pd.Data
     timesheet on the left, or `how="right"` with the frames swapped, both say
     "keep the timesheet's side" — pick whichever reads best to you.)
     """
-    # TODO: your code here
-    pass
+    return pd.merge(timesheet, employees, on="employee_id", how="left")
