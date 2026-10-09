@@ -1,6 +1,38 @@
-Write your reflection here.
+Reflection
 
-See reflection.md for what makes a good reflection — be specific, use the
-terminology from this assignment (lineage, grain, element function, Series.apply,
-row apply / axis=1, left merge, NaN, coerce, copy-add-return, boolean index,
-export), and make it actionable.
+The main idea I took from this assignment is data lineage: a pipeline step adds
+columns and never overwrites, drops, or renames anything. That is why "38h 30m"
+stays in the hours column right next to 38.5 in hours_worked. If the pipeline
+had overwritten hours, the office manager would be back where she started, with
+a paycheck nobody can explain because the raw value is gone. Every step follows
+the copy-add-return shape: out = frame.copy(), add a new column to out, return
+out. The .copy() matters because without it, out["x"] = ... writes into the
+caller's frame, and pandas does not warn you. I used Series.apply for the
+element functions (parse_hours, clean_currency) and DataFrame.apply with
+axis=1 and a lambda for gross_pay and pay_type, since those need two values
+from the same row. Leaving off axis=1 hands the lambda a column instead of a row.
+
+The merge was the part where the grain of the data mattered most. The timesheet
+has one row per person who worked, and the roster has one row per person, so I
+used a left merge with the timesheet on the left. An inner merge, which is the
+default, would quietly drop an unknown ID like E099 and nobody would get an
+error; that person just would not be paid. With a left merge the row survives
+with NaN for the roster columns, and I used pd.isna(rate) to catch it, because
+NaN == NaN is always False. classify_pay checks for unmatched first so an
+unknown ID with overtime hours is still labeled unmatched. The parsers coerce
+bad input ("forty", empty cells) to 0.0 instead of crashing, so one bad cell
+cannot stop payroll for everyone else. In the app I used .sum() for totals and
+a boolean index with len() for counts, and I built the export as a new
+DataFrame instead of renaming columns, so the pipeline table keeps its lineage.
+
+I used Claude for much of the code, and I should say so plainly. My debugging
+was real, though. I hit a NameError from a missing import pandas as pd, and
+later "attempted relative import with no known parent package" from running
+compute.py directly, because compute.py uses relative imports and only works
+when loaded as part of the payroll package. Running it through pytest fixed
+that. I also pasted placeholder docstrings into compute.py by mistake and had
+to restore the originals. Next time I will write each function myself before
+asking for help, run the tests after every function instead of at the end,
+read the file and line in a traceback before guessing at the cause, and run
+ruff check before every commit. I should also be able to explain each function
+without looking at it, and I need to practice that.
